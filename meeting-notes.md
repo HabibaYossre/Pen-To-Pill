@@ -42,3 +42,29 @@
 diff pairs each day
 
 
+---
+
+## **meeting-two notes: 13/2/2025**
+
+- By Order :
+
+    1. Handwritten Extraction  (habiba & haneen) 
+    2. Medicine & Appointment Extraction (mohammed) 
+    3. Scheduling (shrouk & renad)
+        
+
+- **Answer these question** :)
+
+    1. What do you do today?
+    2. Are there any impediments in your way?
+    3. What will you do tommorow?
+    
+## proposal template
+1. solution : add part 
+2. add & search about phase 4
+
+**Task 3:**
+
+1. All team: Add your phase solution to the proposal.  
+2. Haneen & Habiba: Research and add details for Phase 4.  
+3. Renad & Shrouk: Complete missing sections in the proposal and improve  its design (speak about our product).
