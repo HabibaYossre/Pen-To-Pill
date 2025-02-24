@@ -9,7 +9,6 @@
 - next meeting
 - team workflow
 
-
 - Shrouk 
     - hard : multi language 
     - resources
@@ -42,3 +41,30 @@
 diff pairs each day
 
 
+---
+## **meeting-three notes: 14/2/2025**
+
+1. What do you do today?
+
+    - haneen
+    - mohammed
+    - shrouk 
+    - renad
+    - habiba
+ 
+2. task 4:
+
+- complete any missing tasks
+    - ref.
+    - cover page
+- switch searching phases :)
+        1. Handwritten Extraction  (mohammed & shrouk) 
+        2. Medicine & Appointment Extraction (renad & habiba) 
+        3. Scheduling (haneen)
+
+- cnn
+- rnn
+- image segmentation
+- transformers
+
+- surprise !!
