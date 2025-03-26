@@ -7,6 +7,7 @@ phase workflow:
 
     - Step 1: Locate text regions in the prescription.
     - Step 2: Categorize them as handwritten, printed, mixed, or non-text using a Random Forest classifier.
+    
 2. Task 2: Extract medicine names and dosages from handwritten prescriptions.
 
 
