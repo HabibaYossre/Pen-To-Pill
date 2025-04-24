@@ -68,3 +68,24 @@ diff pairs each day
 1. All team: Add your phase solution to the proposal.  
 2. Haneen & Habiba: Research and add details for Phase 4.  
 3. Renad & Shrouk: Complete missing sections in the proposal and improve  its design (speak about our product).
+
+
+
+--------------------
+
+
+### **Meeting 24/4/2025**
+
+**One week left until the competition ends**
+
+1. What have we achieved in website?
+
+2. What have we achieved in AI ?
+
+3. what is the next plan?
+
+1. Solve list problem to make the required pairs
+2. poster
+3. finish front
+4. start backend implementation
+5. model deployment
