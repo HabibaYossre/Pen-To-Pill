@@ -6,16 +6,16 @@ const teamMembers = [
     {
       name: "Habiba Yousri",
       role: "Team Leader, AI Engineer",
-      linkedin: "https://linkedin.com/in/your-profile",
-      github: "https://github.com/yourusername",
-      email: "your.email@example.com",
+      linkedin: "https://www.linkedin.com/in/habiba-yousri/",
+      github: "https://github.com/HabibaYossre",
+      email: "habibayousri46@gmail.com",
     },
     {
       name: "Mohammed Mostafa",
       role: "AI Engineer",
       linkedin: "https://www.linkedin.com/in/mohammed-mostafa237/",
-      github: "https://github.com/omar-elnokrashy",
-      email: "omar@example.com",
+      github: "https://github.com/Mohammed2372",
+      email: "mohammedmostafa2372002@gmail.com",
     },
     {
         name: "Haneen Akram",
@@ -65,7 +65,7 @@ const AboutUs = () => {
         <h2 className="text-3xl font-bold text-indigo-800 mb-8 text-center">Meet the Team</h2>
         <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {teamMembers.map((member) => (
-            <div key={member.name} className="bg-white shadow-md rounded-lg p-6 text-center">
+            <div key={member.name} className="bg- shadow-md rounded-lg p-6 text-center">
               <h3 className="text-xl font-semibold text-indigo-800">{member.name}</h3>
               <p className="text-gray-600 mb-4">{member.role}</p>
               <div className="flex justify-center space-x-4">
