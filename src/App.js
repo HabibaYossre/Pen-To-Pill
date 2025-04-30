@@ -3,6 +3,7 @@ import PrescriptionTracker from './Components/PrescriptionTracker';
 import Home from './Components/Home';
 import Layout from './Components/Layout';
 import AddPrescription from './Components/AddPrescription';
+import AboutUs from './Components/AboutUs';
 import {
   createBrowserRouter,
   createHashRouter,
@@ -27,7 +28,7 @@ const routes = createBrowserRouter([{
     },
     {
       path: "About-us",
-      element: <PrescriptionTracker />,
+      element: <AboutUs />,
     },
   ]
 }]);

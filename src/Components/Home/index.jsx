@@ -17,11 +17,11 @@ const Home = () => {
           {/* Content */}
           <div className="relative z-10 text-center px-4">
             
-            <h6 className="text-white mb-6 tracking-widest">Pen-to-Pill</h6>
+            <h6 className="text-5xl md:text-6xl lg:text-7xl text-white font-light tracking-wider leading-tight">Pen-to-Pill</h6>
             
-            <h1 className="text-5xl md:text-6xl lg:text-7xl text-white font-light tracking-wider leading-tight">
+            <h1 className="text-white  mb-6 tracking-widest">
             Your Pill Planner,
-            <br />Your Health Partner
+            Your Health Partner
             </h1>
             
           </div>          
