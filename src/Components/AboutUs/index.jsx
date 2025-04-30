@@ -27,8 +27,8 @@ const teamMembers = [
     {
       name: "Shrouk Aboalela",
       role: "AI Engineer",
-      linkedin: "https://linkedin.com/in/noura-alaa",
-      github: "https://github.com/noura-alaa",
+      linkedin: "https://linkedin.com/in/shrouk-aboalela/",
+      github: "https://github.com/shroukaboalela",
       email: "shrouk@example.com",
     },
     {
