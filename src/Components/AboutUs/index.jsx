@@ -22,7 +22,7 @@ const teamMembers = [
         role: "AI Engineer",
         linkedin: "https://www.linkedin.com/in/haneen-akram/",
         github: "https://github.com/haneenakram",
-        email: "haneen@example.com",
+        email: "Haneenakram3040@gmail.com",
     },
     {
       name: "Shrouk Aboalela",
