@@ -22,7 +22,7 @@ api.upload_file(
 api = HfApi()
 api.upload_file(
     path_or_fileobj="worddetection.pt",
-    path_in_repo="model/yolo_model.pth",
+    path_in_repo="model/yolo_model.pt",
     repo_id="haneenakram/trocr_finetune_weights_stp",
     repo_type="model"
 )
