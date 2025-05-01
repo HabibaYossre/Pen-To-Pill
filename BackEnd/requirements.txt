@@ -1,0 +1,29 @@
+# Web framework and API
+fastapi==0.103.1
+uvicorn==0.23.2
+python-multipart==0.0.6
+pydantic==2.3.0
+
+# Data processing
+numpy==1.25.2
+pandas==2.1.0
+
+# Computer Vision
+opencv-python==4.8.0.76
+Pillow==10.0.0
+
+# Machine Learning
+torch==2.0.1
+torchvision==0.15.2
+transformers==4.33.1
+jiwer==3.0.3
+ultralytics==8.0.196
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.21.1  # Speeds up fuzzywuzzy
+rapidfuzz==3.3.0
+
+# Utilities
+matplotlib==3.7.3
+
+python-dotenv==1.0.0
+huggingface-hub==0.19.
