@@ -48,7 +48,7 @@ async def load_models():
         # Load YOLO model
         try:
             # Find the YOLO model file
-            yolo_path = hf_hub_download(repo_id=model_path, filename="model/yolo_model.pth")
+            yolo_path = hf_hub_download(repo_id=model_path, filename="model/yolo_model.pt")
             print(f"Downloaded YOLO weights from {yolo_path}")
             
             # YOLO requires .pt extension, so we need to create a copy with the correct extension
