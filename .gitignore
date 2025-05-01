@@ -1,3 +1,4 @@
 fine tune TROCR/model weights
 fine tune TROCR/cropped_images_mohammed
 fine tune TROCR/mohammed file.xlsx
+worddetection.pt
