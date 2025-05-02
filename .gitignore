@@ -1,3 +1,12 @@
 fine tune TROCR/cropped_images_mohammed
 fine tune TROCR/PrescriptionImagesData
 fine tune TROCR/model weights
+# TrOCR rehearse/ *.png
+TrOCR rehearse/image.png
+TrOCR rehearse/image-1.png
+TrOCR rehearse/image-2.png
+TrOCR rehearse/image-3.png
+TrOCR rehearse/image-4.png
+TrOCR rehearse/image-5.png
+TrOCR rehearse/image-6.png
+TrOCR rehearse/image-7.png
