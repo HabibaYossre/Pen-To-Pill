@@ -12,6 +12,10 @@ import os
 import uvicorn
 from ultralytics import YOLO
 import shutil
+from fastapi.middleware.cors import CORSMiddleware
+
+
+
 
 app = FastAPI(
     title="Prescription OCR API",
@@ -19,6 +23,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # You can change "*" to ["http://localhost:3000"] for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Global model variables
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = None  # YOLO model
