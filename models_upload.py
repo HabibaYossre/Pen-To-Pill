@@ -1,6 +1,9 @@
-import torch
+#import torch
 from huggingface_hub import HfApi
 # import kagglehub
+from huggingface_hub import login
+
+#login("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")
 
 # kagglehub.login()
 # # Download latest version
@@ -11,18 +14,29 @@ from huggingface_hub import HfApi
 # print("Path to model files:", path2)
 
 
-# Upload the file
 api = HfApi()
-api.upload_file(
-    path_or_fileobj="model_weights.pth",
-    path_in_repo="TROCR_model/model.pth",
+
+
+# Upload model1
+api.upload_folder(
+    folder_path="GroundTruthmedicinebart-ocr-correction",
+    path_in_repo="medicinembart",
     repo_id="haneenakram/trocr_finetune_weights_stp",
     repo_type="model"
 )
-api = HfApi()
-api.upload_file(
-    path_or_fileobj="worddetection.pt",
-    path_in_repo="model/yolo_model.pt",
+
+# Upload model2
+api.upload_folder(
+    folder_path="GroundTruthAppointbart-ocr-correction",
+    path_in_repo="Appointmbart",
+    repo_id="haneenakram/trocr_finetune_weights_stp",
+    repo_type="model"
+)
+
+# Upload model3
+api.upload_folder(
+    folder_path="mbart-ocr-correction",
+    path_in_repo="mbart",
     repo_id="haneenakram/trocr_finetune_weights_stp",
     repo_type="model"
 )
