@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, Upload, Calendar, Clock, Search, X, Image as ImageIcon } from 'lucide-react';
+import { fetchPrescriptions } from '../../dbOperations';
+import { Prev } from 'react-bootstrap/esm/PageItem';
 
-const PrescriptionTracker = ({medicines = []}) => {
+
+const PrescriptionTracker = ({medicines = [], setMedicines}) => {
   const [step, setStep] = useState('schedule');
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -10,7 +13,29 @@ const PrescriptionTracker = ({medicines = []}) => {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [selectedMed, setSelectedMed] = useState(null);
 
-
+  useEffect(() => {
+    let isMounted = true;
+  
+    const getPrescriptions = async () => {
+      try {
+        const data = await fetchPrescriptions();
+        if (isMounted) {
+          setMedicines(data); // Replace instead of append
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('Error fetching prescriptions:', error);
+        }
+      }
+    };
+  
+    getPrescriptions();
+  
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+  
   console.log("medicines", medicines);
   const determineCategory = (frequency) => {
     if (frequency.includes("صباح") || frequency.includes("الفطار")) return "morning";

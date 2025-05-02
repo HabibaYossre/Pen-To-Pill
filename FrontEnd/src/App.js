@@ -15,18 +15,28 @@ const App = () => {
   // Define state for medicines in the App component
   const [medicines, setMedicines] = useState([]); // Step 1: Define medicines state
   useEffect(() => {
+    let isMounted = true;
+  
     const getPrescriptions = async () => {
       try {
         const data = await fetchPrescriptions();
-        setMedicines(data);
+        if (isMounted) {
+          setMedicines(prevState => [...prevState, ...data]);
+        }
       } catch (error) {
-        console.error('Error fetching prescriptions:', error);
+        if (isMounted) {
+          console.error('Error fetching prescriptions:', error);
+        }
       }
     };
-
+  
     getPrescriptions();
+  
+    return () => {
+      isMounted = false; // Cleanup to prevent state update
+    };
   }, []);
-
+  
   // Define your routes
   const routes = createHashRouter([{
     path: '/',
@@ -42,7 +52,7 @@ const App = () => {
       },
       {
         path: "View-Schedule",
-        element: <PrescriptionTracker medicines={medicines} />,
+        element: <PrescriptionTracker medicines={medicines} setMedicines={setMedicines}/>,
       },
       {
         path: "About-us",
