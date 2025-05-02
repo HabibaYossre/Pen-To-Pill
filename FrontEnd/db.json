@@ -1,0 +1,19 @@
+{
+  "prescriptions": [
+    {
+      "id": "1",
+      "medicine": "Medicine A",
+      "dosage": "Once a day"
+    },
+    {
+      "id": "2",
+      "medicine": "Medicine B",
+      "dosage": "Twice a day"
+    },
+    {
+      "id": "9749",
+      "medicine": "Chlorhexidine",
+      "dosage": "يوميا مرة Amoxicillin كل 12 ساعة Azithromycin يومياً مرتين Signature"
+    }
+  ]
+}
