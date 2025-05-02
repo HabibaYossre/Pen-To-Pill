@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Camera, Upload, Calendar, Clock, Search, X, Image as ImageIcon } from 'lucide-react';
 
 
-const PrescriptionTracker = ({medicines = []}) => {
+const PrescriptionTracker = ({ medicines = [], setMedicines, isLoading }) => {
   const [step, setStep] = useState('schedule');
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');

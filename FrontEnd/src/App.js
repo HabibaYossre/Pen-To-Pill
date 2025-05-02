@@ -9,33 +9,41 @@ import {
   createHashRouter,
   RouterProvider,
 } from "react-router-dom";
-import { useState, useEffect} from 'react'; // Import useState
+import { useState, useEffect } from 'react';
 
 const App = () => {
   // Define state for medicines in the App component
-  const [medicines, setMedicines] = useState([]); // Step 1: Define medicines state
+  const [medicines, setMedicines] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
     let isMounted = true;
-  
+    
     const getPrescriptions = async () => {
+      setIsLoading(true);
       try {
         const data = await fetchPrescriptions();
         if (isMounted) {
-          setMedicines(prevState => [...prevState, ...data]);
+          // Replace the state instead of appending
+          setMedicines(data);
         }
       } catch (error) {
         if (isMounted) {
           console.error('Error fetching prescriptions:', error);
         }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
-  
+    
     getPrescriptions();
-  
+    
     return () => {
       isMounted = false; // Cleanup to prevent state update
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once
   
   // Define your routes
   const routes = createHashRouter([{
@@ -48,11 +56,16 @@ const App = () => {
       },
       {
         path: "Add-Prescription",
-        element: <AddPrescription setMedicines={setMedicines} />, 
+        element: <AddPrescription setMedicines={setMedicines} />,
       },
       {
         path: "View-Schedule",
-        element: <PrescriptionTracker medicines={medicines} setMedicines={setMedicines}/>,
+        element: 
+          <PrescriptionTracker 
+            medicines={medicines} 
+            setMedicines={setMedicines}
+            isLoading={isLoading}
+          />,
       },
       {
         path: "About-us",
@@ -60,7 +73,7 @@ const App = () => {
       },
     ],
   }]);
-
+  
   return (
     <RouterProvider router={routes} />
   );
