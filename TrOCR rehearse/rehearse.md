@@ -1,43 +1,47 @@
 # _Text Extraction Challenge_
 
-## Required
+<!-- ## Required
 
 OCR experiments: EasyOCR, Tesseract, and final fine-tuned TrOCR.
-talk about the result of the model and know the metrics and what does it represent, and the split size of data, rehearse the poster
-
----
+talk about the result of the model and know the metrics and what does it represent, and the split size of data, rehearse the poster -->
 
 ## Talk Preparation
 
 ### OCR model
 
-- first thing, we searched on how to make text extraction form images, we found that OCR models are the best fit to make this task, there were many OCR models, we tried easyocr model and Tesseract, but they didn't perform well on Arabic handwritten, they often misread characters, missed words, or struggled with alignment and noise.
+- first thing, we searched on how to make text extraction form images, we found that OCR models are the best fit to make this task
+- there are many versions of OCR models, we tried `easyOCR`, `paddleOCR`, `Tesseract`, `donutOCR` models, but they didn't perform well, they often misread characters, missed words.
+- we choose `easyOCR` as its result was the best of them and kept working with it for along time phase 1 and phase 2, but why did we change to `TrOCR`, that is because that we wanted to fine tune the ocr model and `TrOCR` was the simplest among all models to make train with.
 
 ### TrOCR model
 
-- that led us to TrOCR model, it was the best of them when we tried it, but it wasn't the best thing, so we decided we need to fine tune it.
+- that led us to `TrOCR` model, it was the best of them when we tried it and with fine tunning, but it wasn't the best result bardo, so we decided we need to fine tune it with examples of what he expect.
 
-### making new dataset to fine tune
+### Image processing
 
-- we make a dataset contains of the cropped images from YOLO and the word in the cropped image, and began to fine tune TrOCR on this data and make image
+- processing to the cropped images before giving it to the model, the preprocessing is GrayScale conversion, contrast enhancement, resize to a fixed height of 64 pixels with maintaining aspect ration, then convert the image back to RGB to match TrOCR input format
 
-### image processing
+### Making new dataset to fine tune
 
-- processing to the cropped images before giving it to the model, the preprocessing is Grayscale conversion, contrast enhancement, resize to a fixed height of 64 pixels with maintaining aspect ration, then convert the image back to RGB to match TrOCR input format
+- we make a dataset contains around 1300 cropped images from YOLO and labeled each cropped image with the word in the image, and began to fine tune TrOCR on this data and save the weights of the model to use
 
-### model evaluation and testing
+### Model evaluation and testing
 
-- to evaluat the model we used two metrices which are WER and CER and the loss was dropping with good rate without making overfitting
-  and to test the model we used exact match accuracy with 80% and character-level accuracy with 84%
+- to evaluate the model we used two metrics which are WER and CER and the loss was dropping with good rate without making overfitting
+- to test the model we used exact match accuracy with 80% and character-level accuracy with 84%
 
----
+### Next phase
 
-## what is TrOCR ?
+- but the output was not the best but we decided to correct the text extracted from the images with nlp techniques and enough of vision
+
+## Preparation for questions
+
+### What is TrOCR ?
 
 TrOCR -> Transformer-based OCR (Optical Character Recognition) using Vision Transformer (Vit) as an image encoder and a Text Transformer as a decoder
 ![alt text](image.png)
 
-## TrOCR Architecture
+### TrOCR Architecture
 
 _1- `Encoder`: Vision Transformer (Vit)_
 
@@ -47,7 +51,7 @@ _1- `Encoder`: Vision Transformer (Vit)_
 - a position embedding is added (so mode know the patch positions).
 - the resulting sequency of embeddings goes through multiple _self-attention layers_ (Transformer blocks).
 
-### why it works ?
+#### why it works ?
 
 instead of extracting hand-crafted features (edges, contours), the ViT learn meaningful visual representation directly from the image
 
@@ -59,14 +63,14 @@ _2- `Decoder` : Text Transformer_
   - cross-attention: it predicts the next character or word in the sequence.
 - at each time step, it predicts the next character or word in the sequence.
 
-## Math behind TrOCR
+### Math behind TrOCR
 
 ![alt text](image-1.png)
 ![alt text](image-2.png)
 ![alt text](image-3.png)
 ![alt text](image-4.png)
 
-## Evaluation Metrics
+### Evaluation Metrics
 
 _1- Word Error Rate (WER)_
 ![alt text](image-5.png)
@@ -84,6 +88,6 @@ _4- Character-Level Accuracy_
 - Measures what percentage of individual characters are correct.
 - If a word has 7 characters and 6 are correct, that’s ~85.7% accuracy for that word.
 
-## ✅ Why TrOCR is Better than EasyOCR or Tesseract
+### ✅ Why TrOCR is Better than EasyOCR or Tesseract
 
 ![alt text](image-7.png)
