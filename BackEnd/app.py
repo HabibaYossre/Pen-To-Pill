@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image, ImageEnhance
-from transformers import AutoProcessor, VisionEncoderDecoderModel, BartTokenizer, BartForConditionalGeneration
+from transformers import AutoProcessor,MBart50Tokenizer, MBartTokenizer, MBartForConditionalGeneration,VisionEncoderDecoderModel, BartTokenizer, BartForConditionalGeneration
 from typing import List, Dict, Tuple, Any
 import io
 import tempfile
@@ -13,9 +13,6 @@ import uvicorn
 from ultralytics import YOLO
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
-
-
-
 
 app = FastAPI(
     title="Prescription OCR API",
@@ -35,12 +32,17 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model = None  # YOLO model
 processor = None  # TrOCR processor
 new_model = None  # TrOCR model
-bart_tokenizer = None
+# New BART model variables
+bart_tokenizer = None  # MBart for text ordering
 bart_model = None
+bart_tokenizer_1 = None  # BART for medicine extraction
+bart_model_1 = None
+bart_tokenizer_2 = None  # BART for dosage extraction
+bart_model_2 = None
 
 @app.on_event("startup")
 async def load_models():
-    global model, processor, new_model, bart_tokenizer, bart_model
+    global model, processor, new_model, bart_tokenizer, bart_model, bart_tokenizer_1, bart_model_1, bart_tokenizer_2, bart_model_2
     
     print("Loading models...")
     model_path = "haneenakram/trocr_finetune_weights_stp"
@@ -201,17 +203,99 @@ async def load_models():
             print(f"Error in TrOCR loading process: {str(e)}")
             import traceback
             traceback.print_exc()
-        # # Load BART for text correction
-        # try:
-        #     print("Loading BART model...")
-        #     bart_tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
-        #     bart_model = BartForConditionalGeneration.from_pretrained("facebook/bart-large")
-        #     bart_model.to(device)
-        #     print("BART model loaded successfully")
-        # except Exception as e:
-        #     print(f"Error loading BART model: {str(e)}")
-        #     bart_tokenizer = None
-        #     bart_model = None
+        # Load BART models according to the folder structure shown in the repo
+        try:
+            # Step 3: Download and load MBart model (for text ordering)
+            if "mbart" in [f.split('/')[0] for f in files if '/' in f]:
+                print("Found mbart folder in repository")
+                
+                # Create temp directory for mbart files
+                mbart_temp_dir = os.path.join(tempfile.mkdtemp(), "mbart")
+                os.makedirs(mbart_temp_dir, exist_ok=True)
+                
+                # Get all files in the mbart directory
+                mbart_files = [f for f in files if f.startswith("mbart/")]
+                
+                # Download each file to our temp directory
+                for mbart_file in mbart_files:
+                    local_path = os.path.join(tempfile.gettempdir(), mbart_file)
+                    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                    
+                    file_path = hf_hub_download(repo_id=model_path, filename=mbart_file)
+                    target_path = os.path.join(mbart_temp_dir, os.path.basename(mbart_file))
+                    shutil.copy(file_path, target_path)
+                
+                print(f"Downloaded MBart model files to {mbart_temp_dir}")
+                
+                # Load MBart tokenizer and model
+                bart_tokenizer = MBart50Tokenizer.from_pretrained(mbart_temp_dir)
+                bart_model = MBartForConditionalGeneration.from_pretrained(mbart_temp_dir).to(device)
+                print("✅ MBart model loaded successfully!")
+            else:
+                print("MBart directory not found in files")
+
+            # Step 4: Download and load BART model 1 (medicine extraction)
+            if "medicinembart" in [f.split('/')[0] for f in files if '/' in f]:
+                print("Found medicinembart folder in repository")
+                
+                # Create temp directory for medicinebart files
+                medicinebart_temp_dir = os.path.join(tempfile.mkdtemp(), "medicinembart")
+                os.makedirs(medicinebart_temp_dir, exist_ok=True)
+                
+                # Get all files in the medicinebart directory
+                medicinebart_files = [f for f in files if f.startswith("medicinembart/")]
+                
+                # Download each file to our temp directory
+                for med_file in medicinebart_files:
+                    local_path = os.path.join(tempfile.gettempdir(), med_file)
+                    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                    
+                    file_path = hf_hub_download(repo_id=model_path, filename=med_file)
+                    target_path = os.path.join(medicinebart_temp_dir, os.path.basename(med_file))
+                    shutil.copy(file_path, target_path)
+                
+                print(f"Downloaded BART model 1 files to {medicinebart_temp_dir}")
+                
+                # Load BART tokenizer and model for medicine extraction
+                bart_tokenizer_1 = BartTokenizer.from_pretrained(medicinebart_temp_dir)
+                bart_model_1 = BartForConditionalGeneration.from_pretrained(medicinebart_temp_dir).to(device)
+                print("✅ BART model 1 (medicine) loaded successfully!")
+            else:
+                print("medicinebart directory not found in files")
+
+            # Step 5: Download and load BART model 2 (appointment/dosage extraction)
+            if "Appointmbart" in [f.split('/')[0] for f in files if '/' in f]:
+                print("Found Appointmbart folder in repository")
+                
+                # Create temp directory for Appointmbart files
+                appointmbart_temp_dir = os.path.join(tempfile.mkdtemp(), "Appointmbart")
+                os.makedirs(appointmbart_temp_dir, exist_ok=True)
+                
+                # Get all files in the Appointmbart directory
+                appointmbart_files = [f for f in files if f.startswith("Appointmbart/")]
+                
+                # Download each file to our temp directory
+                for appt_file in appointmbart_files:
+                    local_path = os.path.join(tempfile.gettempdir(), appt_file)
+                    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                    
+                    file_path = hf_hub_download(repo_id=model_path, filename=appt_file)
+                    target_path = os.path.join(appointmbart_temp_dir, os.path.basename(appt_file))
+                    shutil.copy(file_path, target_path)
+                
+                print(f"Downloaded BART model 2 files to {appointmbart_temp_dir}")
+                
+                # Load BART tokenizer and model for appointment/dosage extraction
+                bart_tokenizer_2 = BartTokenizer.from_pretrained(appointmbart_temp_dir)
+                bart_model_2 = BartForConditionalGeneration.from_pretrained(appointmbart_temp_dir).to(device)
+                print("✅ BART model 2 (dosage) loaded successfully!")
+            else:
+                print("Appointmbart directory not found in files")
+
+        except Exception as e:
+            print(f"Error loading BART models: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
     except Exception as e:
         print(f"Error accessing Hugging Face repository: {str(e)}")
@@ -221,7 +305,9 @@ async def load_models():
     print("Model loading completed")
     print(f"YOLO model loaded: {model is not None}")
     print(f"TrOCR model loaded: {new_model is not None}")
-    print(f"BART model loaded: {bart_model is not None}")
+    print(f"MBart model loaded: {bart_model is not None}")
+    print(f"BART model 1 loaded: {bart_model_1 is not None}")
+    print(f"BART model 2 loaded: {bart_model_2 is not None}")
     
     # If models failed to load, we should report this clearly
     if new_model is None:
@@ -229,7 +315,12 @@ async def load_models():
     if model is None:
         print("WARNING: YOLO model failed to load! Application will not function correctly.")
     if bart_model is None:
-        print("WARNING: BART model failed to load! Text correction will be skipped.")
+        print("WARNING: MBart model failed to load! Text ordering will be skipped.")
+    if bart_model_1 is None:
+        print("WARNING: BART model 1 failed to load! Medicine extraction will be skipped.")
+    if bart_model_2 is None:
+        print("WARNING: BART model 2 failed to load! Dosage extraction will be skipped.")
+
 
 def remove_duplicate_boxes(boxes, iou_threshold=0.8):
     if len(boxes) == 0:
@@ -292,17 +383,24 @@ def correct_text_with_bart(texts, tokenizer, model, device):
         corrected_texts.append(corrected_text)
     return corrected_texts
 
-def split_into_medicine_dosage_pairs(corrected_text):
+def split_into_medicine_dosage_pairs(medicine_text, dosage_text):
     pairs = []
-    items = [item.strip() for item in corrected_text.split(',') if item.strip()]
-    for item in items:
-        parts = item.strip().split(maxsplit=1)
-        if len(parts) == 2:
-            medicine, dosage = parts
-            pairs.append((medicine, dosage))
-        else:
-            pairs.append((parts[0], ""))
+    medicine_items = [item.strip() for item in medicine_text.split(',') if item.strip()]
+    dosage_items = [item.strip() for item in dosage_text.split(',') if item.strip()]
+
+    # Pairing the medicine names with dosages
+    for med, dos in zip(medicine_items, dosage_items):
+        pairs.append((med, dos))
+
+    # Handle any unmatched pairs
+    if len(medicine_items) > len(dosage_items):
+        for med in medicine_items[len(dosage_items):]:
+            pairs.append((med, ""))
+    elif len(dosage_items) > len(medicine_items):
+        for dos in dosage_items[len(medicine_items):]:
+            pairs.append(("", dos))
     return pairs
+
 
 def process_image(image):
     # Check if models are loaded
@@ -333,18 +431,36 @@ def process_image(image):
             output_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         extracted_text += output_text.strip() + " "
     
-    # Correct text using BART if it's available
+    # Step 1: Reorder/correct full sentence using the MBart model
     if bart_tokenizer is not None and bart_model is not None:
-        corrected_texts = correct_text_with_bart([extracted_text.strip()], 
-                                                bart_tokenizer, 
-                                                bart_model, 
-                                                device)
+        inputs = bart_tokenizer(extracted_text.strip(), return_tensors="pt", max_length=1024, truncation=True).to(device)
+        with torch.no_grad():
+            summary_ids = bart_model.generate(inputs['input_ids'], max_length=1024, num_beams=4, early_stopping=True)
+        reordered_text = bart_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
     else:
-        # Skip BART correction if not available
-        corrected_texts = [extracted_text.strip()]
+        reordered_text = extracted_text.strip()
     
-    # Split into medicine-dosage pairs
-    return split_into_medicine_dosage_pairs(corrected_texts[0])
+    # Step 2: Extract medicine using BART model 1
+    if bart_tokenizer_1 is not None and bart_model_1 is not None:
+        inputs_med = bart_tokenizer_1(reordered_text, return_tensors="pt", max_length=1024, truncation=True).to(device)
+        with torch.no_grad():
+            med_ids = bart_model_1.generate(inputs_med['input_ids'], max_length=1024, num_beams=4, early_stopping=True)
+        medicine_text = bart_tokenizer_1.decode(med_ids[0], skip_special_tokens=True)
+    else:
+        medicine_text = reordered_text
+    
+    # Step 3: Extract dosage using BART model 2
+    if bart_tokenizer_2 is not None and bart_model_2 is not None:
+        inputs_dos = bart_tokenizer_2(reordered_text, return_tensors="pt", max_length=1024, truncation=True).to(device)
+        with torch.no_grad():
+            dos_ids = bart_model_2.generate(inputs_dos['input_ids'], max_length=1024, num_beams=4, early_stopping=True)
+        dosage_text = bart_tokenizer_2.decode(dos_ids[0], skip_special_tokens=True)
+    else:
+        dosage_text = ""
+    
+    # Final pairing: medicine first
+    return split_into_medicine_dosage_pairs(medicine_text, dosage_text)
+
 
 @app.get("/")
 def read_root():
