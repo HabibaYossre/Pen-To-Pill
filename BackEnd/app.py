@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 import cv2
@@ -14,8 +15,12 @@ from ultralytics import YOLO
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
 from huggingface_hub import login
+import os
 
-login(token="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")
+load_dotenv()
+login(token=os.environ["HUGGINGFACE_TOKEN"],add_to_git_credential=True)
+
+# login(token="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")
 app = FastAPI(
     title="Prescription OCR API",
     description="API for extracting medicine and dosage information from prescription images",

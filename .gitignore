@@ -5,3 +5,4 @@ worddetection.pt
 node_modules
 /BackEnd/__pycache__
 /BackEnd/venv
+/BackEnd/.env
