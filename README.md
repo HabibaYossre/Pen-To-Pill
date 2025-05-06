@@ -20,6 +20,8 @@
 - **BART (mBART)** – Corrects and structures extracted text into a standard format.
 - **Python**, **PyTorch** – Core implementation frameworks.
 - **Google Colab / Kaggle Notebooks** – Training & experimentation environments.
+- **React.js** – Frontend library for building the user interface.
+- **FastAPI** – High-performance web framework for building the backend API.
 
 ---
 
