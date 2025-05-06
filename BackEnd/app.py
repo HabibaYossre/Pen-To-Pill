@@ -18,7 +18,7 @@ from huggingface_hub import login
 import os
 
 load_dotenv()
-login(token=os.environ["HUGGINGFACE_TOKEN"],add_to_git_credential=True)
+login(token=os.environ["HUGGINGFACE_TOKEN"])
 
 # login(token="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")
 app = FastAPI(
