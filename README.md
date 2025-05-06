@@ -60,3 +60,53 @@ The solution follows a multi-step pipeline:
 - Extend multilingual support beyond Arabic-English.
 
 ---
+
+## **Installation & Deployment Guide**
+
+### Prerequisites
+- Node.js and npm installed
+- Python 3.10 installed
+- Git installed
+
+### Installation & Setup
+
+#### Frontend Setup
+1. Navigate to the Frontend directory:
+   ```bash
+   cd FrontEnd
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm i
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run server
+   ```
+
+4. In a new terminal, start the React application:
+   ```bash
+   npm start
+   ```
+
+#### Backend Setup
+1. Navigate back to the project root directory, then to the Backend folder:
+   ```bash
+   cd ..
+   cd Backend
+   ```
+
+2. Install required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the Flask application:
+   ```bash
+   python app.py
+   ```
+
+The frontend application should now be accessible at `http://localhost:8000` and will communicate with the backend running on the port specified in the FastAPI application.
+
