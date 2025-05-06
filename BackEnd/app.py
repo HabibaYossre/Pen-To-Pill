@@ -13,7 +13,9 @@ import uvicorn
 from ultralytics import YOLO
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
+from huggingface_hub import login
 
+login(token="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")
 app = FastAPI(
     title="Prescription OCR API",
     description="API for extracting medicine and dosage information from prescription images",
