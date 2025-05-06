@@ -3,3 +3,5 @@ fine tune TROCR/cropped_images_mohammed
 fine tune TROCR/mohammed file.xlsx
 worddetection.pt
 node_modules
+/BachEnd/__pycache__
+/BachEnd/venv
