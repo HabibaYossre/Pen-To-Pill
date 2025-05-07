@@ -73,7 +73,7 @@ The solution follows a multi-step pipeline:
 ### Prerequisites
 
 - Node.js and npm installed
-- Python 3.10 installed
+- Python 3.10.0 installed
 - Git installed
 
 ### Installation & Setup
