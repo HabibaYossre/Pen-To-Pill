@@ -98,10 +98,17 @@ cd ..
 cd BackEnd
 ```
 Make sure the Python version is 3.10.0
-
-```bash
- python --version
-```
+* **Windows:**
+  
+   ```bash
+    python --version
+   ```
+   
+* **Linux/macOS:**
+  
+   ```bash
+    python3 --version
+   ```
 
 #### 1. Create a virtual environment:
 
