@@ -1,5 +1,19 @@
 {
   "prescriptions": [
-    
+    {
+      "id": "2abf",
+      "medicine": "Levetiracetam Twice daily",
+      "dosage": "Twice daily"
+    },
+    {
+      "id": "f2fd",
+      "medicine": "Carbamazepine Every 6 hours",
+      "dosage": "Every 6 hours"
+    },
+    {
+      "id": "6a7f",
+      "medicine": "Ropinirole Before bed",
+      "dosage": "Before bed"
+    }
   ]
 }
