@@ -15,7 +15,7 @@ To fine-tune the TrOCR model on Arabic handwritten word images, we used both ann
 
 * **2. Training Image Dataset** (Used for TrOCR Fine-Tuning):
   
-  [🔗 Google Drive Folder](https://drive.google.com/drive/folders/16UwlqoQHIbKbaId0BsbIIF1qUIP8hVNK?usp=sharing)
+  [🔗 Google Drive Folder](https://drive.google.com/drive/folders/1lawEwlqBepyscLwgvwBQVeLdBfjplsrs?usp=sharing)
   Contains pre-cropped handwritten word images prepared for TrOCR training.
 
 * **3. Label File** (Image-to-Word Mappings):
@@ -26,4 +26,46 @@ To fine-tune the TrOCR model on Arabic handwritten word images, we used both ann
   * `word`: corresponding handwritten word
 
 ---
+
+## **Steps Overview**
+
+### **1️. Data Collection & Preparation**
+
+* Handwritten word images were **manually labeled** after being cropped using YOLO-detected bounding boxes.
+
+* For each cropped image, the **corresponding ground truth** word was assigned through manual annotation.
+
+* All labeled word images were then consolidated into a single directory, forming a clean and **structured dataset** ready for TrOCR fine-tuning.
+
+> This process ensures high-quality training data by combining automated detection with manual correction for optimal accuracy.
+
+---
+
+### **2️. Model Fine-Tuning**
+
+* **Model & Processor**: Used the pre-trained `microsoft/trocr-base-handwritten` model with `TrOCRProcessor` to handle English and Arabic handwritten word recognition.
+
+* **Data Pipeline**: Loaded images and corresponding word labels from an Excel file and image folder, then created custom `PrescriptionDataset` for PyTorch, including text tokenization and image processing.
+
+* **Training Setup**: Fine-tuned the model using `Seq2SeqTrainer` from Hugging Face with evaluation at every 200 steps, a custom Character Error Rate (CER) metric, and memory optimizations tailored for low-resource environments.
+
+
+---
+
+## **Evaluation & Metrics**
+
+![Rough Metrics](./Model%20Fine-tuning/accuracy.png)
+
+
+---
+
+##  **Results**
+
+| Metric         | Value                               |
+| -------------- | ----------------------------------- |
+| **Exact match accuracy** | **80%** |
+| **Character Level accuracy**  | **83.43%** |
+
+---
+
 
