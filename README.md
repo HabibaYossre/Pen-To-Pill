@@ -1,160 +1,154 @@
-# 🩺 **Pen to Pill (P2P) - Prescription Digitization System**
+# 🩺 Pen to Pill (P2P) - Prescription Digitization System
 
-> **Summit Machathon 6.0 Project**  
-> Team Members: Habiba Yousri, Haneen Akram, Renad Hossam, Mohammed Mostafa, Shrouk Mohamed
-
----
-
-## **Overview**
-
-**Pen to Pill (P2P)** is an AI-powered system that digitizes handwritten medical prescriptions, with a focus on complex multilingual documents written in Arabic and English. It aims to improve patient safety and healthcare efficiency by extracting structured medication data from unstructured, handwritten prescriptions.
+> 🎓 **Summit Machathon 6.0 Project**  
+> 👥 **Team Members:** Habiba Yousri, Haneen Akram, Renad Hossam, Mohammed Mostafa, Shrouk Mohamed
 
 ---
 
-## **Tools & Technologies**
+## 📖 Overview
 
-- **Roboflow** – Annotation tool for labeling Arabic and English words.
-- **YOLOv8** – Detects handwritten regions in prescriptions.
-- **TrOCR** – Transformer-based OCR for recognizing multilingual handwriting.
-- **BART (mBART)** – Corrects and structures extracted text into a standard format.
-- **Python**, **PyTorch** – Core implementation frameworks.
-- **Google Colab / Kaggle Notebooks** – Training & experimentation environments.
-- **React.js** – Frontend library for building the user interface.
-- **FastAPI** – High-performance web framework for building the backend API.
+**Pen to Pill (P2P)** is an AI-powered system that digitizes handwritten medical prescriptions, focusing on complex **multilingual documents** (Arabic & English).  
+It aims to **enhance patient safety** and **boost healthcare efficiency** by converting unstructured handwriting into structured, usable medical data.
 
 ---
 
-## 🔍 **Methodology**
+## 🛠️ Tools & Technologies
 
-The solution follows a multi-step pipeline:
+| Technology     | Purpose                                  |
+|----------------|-------------------------------------------|
+| **Roboflow**      | Annotation tool for labeling Arabic & English text |
+| **YOLOv8**         | Detects handwritten regions in prescriptions        |
+| **TrOCR**          | Multilingual OCR for handwritten text               |
+| **BART (mBART)**   | Structures and cleans the recognized text           |
+| **Python**, **PyTorch** | Core implementation frameworks                |
+| **Google Colab / Kaggle** | Model training & experimentation         |
+| **React.js**       | Frontend UI                                      |
+| **FastAPI**         | Backend API development                          |
 
-1. **Handwritten Word Region Detection**
+---
 
-   - Custom annotations using Roboflow.
-   - YOLOv8 model trained to detect word-level bounding boxes (Arabic & English).
+## 🧪 Methodology
 
-2. **Duplicate Box Removal**
+A step-by-step AI pipeline:
 
-   - Non-Maximum Suppression (IoU = 0.8) to eliminate redundant detections.
+1. **Handwritten Word Detection**
+   - Annotate data using Roboflow
+   - Train YOLOv8 on multilingual bounding boxes
+
+2. **Duplicate Removal**
+   - Use Non-Maximum Suppression (IoU = 0.8)
 
 3. **Box Sorting**
-
-   - Sort boxes top-to-bottom, left-to-right for proper text sequence.
+   - Top-to-bottom, left-to-right for logical reading order
 
 4. **Text Recognition (TrOCR)**
-
-   - Preprocessed and resized word images.
-   - Fine-tuned TrOCR model for accurate handwriting recognition.
+   - Process word crops and predict text with fine-tuned TrOCR
 
 5. **Text Reconstruction**
+   - Combine detected words into one coherent string
 
-   - Combine individual words into a single prescription string.
-
-6. **Text Correction & Structuring (BART)**
-
-   - Clean and format OCR output into: `medicine dosage, medicine dosage, ...`
+6. **Text Correction & Structuring (mBART)**
+   - Normalize output to this format:  
+     `medicine dosage, medicine dosage, ...`
 
 7. **Post-Processing**
-   - Extract `(medicine, dosage)` pairs for digital use.
+   - Extract structured `(medicine, dosage)` pairs
 
 ---
 
-## **Future Work**
+## 🚀 Future Work
 
-- Expand the dataset with more real-world handwritten prescriptions.
-- Improve mBART output consistency on edge cases.
-- Integrate with digital health record systems and mobile applications.
-- Extend multilingual support beyond Arabic-English.
+- Add more real-world handwritten prescriptions to the dataset
+- Enhance mBART accuracy for edge cases
+- Integrate with EHR systems and mobile apps
+- Support more languages beyond Arabic-English
 
 ---
 
-## **Installation & Deployment Guide**
+## ⚙️ Installation & Deployment
 
-### Prerequisites
+### 🔧 Prerequisites
 
-- Node.js and npm installed
-- Python 3.10.0 installed
-- Git installed
+- [Node.js](https://nodejs.org/) & npm
+- Python 3.10.0
+- Git
 
-### Installation & Setup
+---
 
-#### Frontend Setup
+### 💻 Frontend Setup
 
-1. Navigate to the Frontend directory:
+```bash
+cd FrontEnd
+npm i
+npm run server
+````
 
-   ```bash
-   cd FrontEnd
-   ```
+➡️ In a new terminal:
 
-2. Install dependencies:
+```bash
+npm start
+```
 
-   ```bash
-   npm i
-   ```
+---
 
-3. Start the development server:
+### 🖥️ Backend Setup
 
-   ```bash
-   npm run server
-   ```
+```bash
+cd ..
+cd BackEnd
+```
 
-4. In a new terminal, start the React application:
-   ```bash
-   npm start
-   ```
+#### 1. Create a virtual environment:
 
-#### Backend Setup
+* **Windows:**
 
-1. Navigate back to the project root directory, then to the Backend folder:
-   
-   ```bash
-   cd ..
-   cd BackEnd
-   ```
-2. Make Python envirenment:
+  ```bash
+  python -m venv venv
+  ```
+* **Linux/macOS:**
 
-   - Windows:
+  ```bash
+  python3 -m venv venv
+  ```
 
-      ```bash
-      python -m venv venv    
-      ```
-   - Linux:
+#### 2. Activate the environment:
 
-       ```bash
-      python3 -m venv venv    
-      ```
+* **Windows:**
 
-3. Activate the envirenment:
-   - Windows:
+  ```bash
+  venv\Scripts\activate
+  ```
+* **Linux/macOS:**
 
-      ```bash
-      venv\Scripts\activate
-      ```
-   - Linux:
-      ```bash
-      source venv/bin/activate
-      ```
-4. Install required Python packages:
+  ```bash
+  source venv/bin/activate
+  ```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+#### 3. Install dependencies:
 
-5. Run the Flask application:
-   - Windows:
-      
-      ```bash
-      python app.py
-      ```
-   - Linux:
+```bash
+pip install -r requirements.txt
+```
 
-      ```bash
-      python3 app.py
-      ```
+#### 4. Run the backend:
 
+* **Windows:**
 
-The frontend application should now be accessible at `http://localhost:8000` and will communicate with the backend running on the port specified in the FastAPI application.
+  ```bash
+  python app.py
+  ```
+* **Linux/macOS:**
 
-## **Demo Video**
+  ```bash
+  python3 app.py
+  ```
+
+---
+
+🌐 The frontend runs at `http://localhost:8000` and communicates with the backend via FastAPI.
+
+---
+
+## 🎥 Demo
 
 ![Demo Video](./Demo/Demo_Pen_To_Pill.gif)
