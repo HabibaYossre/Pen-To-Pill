@@ -4,6 +4,11 @@
 > 👥 **Team Members:** Habiba Yousri, Haneen Akram, Renad Hossam, Mohammed Mostafa, Shrouk Mohamed
 
 ---
+## 🎥 Demo
+
+![Demo Video](./Demo/Demo_Pen_To_Pill.gif)
+
+---
 
 ## 📖 Overview
 
@@ -158,9 +163,3 @@ pip install -r requirements.txt
 ---
 
 🌐 The frontend runs at `http://localhost:8000` and communicates with the backend via FastAPI.
-
----
-
-## 🎥 Demo
-
-![Demo Video](./Demo/Demo_Pen_To_Pill.gif)
