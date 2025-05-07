@@ -15,6 +15,7 @@ This project presents an end-to-end pipeline for extracting structured data from
 ![YOLO Annotations](Images/image-2.png)
 
 **After Sorting and Removing Duplicates and Detected Word Boxes:** 10
+
 ![After NMS](Images/image-3.png)
 
 ---
