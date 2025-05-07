@@ -126,8 +126,4 @@ The solution follows a multi-step pipeline:
 The frontend application should now be accessible at `http://localhost:8000` and will communicate with the backend running on the port specified in the FastAPI application.
 
 ## **Demo Video**
-
-<video width="700" height="400" controls>
-  <source src="./Demo/Demo_Pen_To_Pill.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![Demo Video](Demo/Demo_Pen_To_Pill-ezgif.com-video-to-gif-converter.gif)
