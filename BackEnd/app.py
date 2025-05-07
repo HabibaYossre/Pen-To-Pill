@@ -1,11 +1,10 @@
-from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 import cv2
 import numpy as np
 import torch
 from PIL import Image, ImageEnhance
-from transformers import AutoProcessor,MBart50Tokenizer, MBartTokenizer, MBartForConditionalGeneration,VisionEncoderDecoderModel, BartTokenizer, BartForConditionalGeneration
+from transformers import AutoProcessor, MBart50Tokenizer, MBartTokenizer, MBartForConditionalGeneration, VisionEncoderDecoderModel, BartTokenizer, BartForConditionalGeneration
 from typing import List, Dict, Tuple, Any
 import io
 import tempfile
@@ -14,13 +13,11 @@ import uvicorn
 from ultralytics import YOLO
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
-from huggingface_hub import login
-import os
 
-load_dotenv()
-login(token=os.environ["HUGGINGFACE_TOKEN"])
+# Initialize device at the beginning
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
-# login(token="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")
 app = FastAPI(
     title="Prescription OCR API",
     description="API for extracting medicine and dosage information from prescription images",
@@ -29,17 +26,16 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # You can change "*" to ["http://localhost:3000"] for security
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # Global model variables
-device = "cuda" if torch.cuda.is_available() else "cpu"
 model = None  # YOLO model
 processor = None  # TrOCR processor
 new_model = None  # TrOCR model
-# New BART model variables
 bart_tokenizer = None  # MBart for text ordering
 bart_model = None
 bart_tokenizer_1 = None  # BART for medicine extraction
@@ -51,8 +47,19 @@ bart_model_2 = None
 async def load_models():
     global model, processor, new_model, bart_tokenizer, bart_model, bart_tokenizer_1, bart_model_1, bart_tokenizer_2, bart_model_2
     
-    print("Loading models...")
+    print("Starting model loading process...")
     model_path = "haneenakram/trocr_finetune_weights_stp"
+    
+    # Initialize models to None so we can check if they're loaded later
+    model = None  # YOLO
+    new_model = None  # TrOCR
+    processor = None  # TrOCR processor
+    bart_model = None  # MBart for text ordering
+    bart_tokenizer = None
+    bart_model_1 = None  # BART for medicine extraction
+    bart_tokenizer_1 = None
+    bart_model_2 = None  # BART for appointment/dosage extraction
+    bart_tokenizer_2 = None
     
     try:
         from huggingface_hub import HfApi, hf_hub_download
@@ -65,269 +72,195 @@ async def load_models():
         files = api.list_repo_files(model_path)
         print(f"Available files in repo: {files}")
         
-        # Load YOLO model
+        # Determine available devices and memory
+        if torch.cuda.is_available():
+            print(f"CUDA available: {torch.cuda.get_device_name(0)}")
+            try:
+                # Check available GPU memory (in MB)
+                gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024 * 1024)
+                free_memory = torch.cuda.memory_reserved(0) / (1024 * 1024)
+                print(f"GPU total memory: {gpu_memory:.2f} MB, Free memory: {free_memory:.2f} MB")
+                
+                # If very limited GPU memory, use CPU for all models
+                if gpu_memory < 4000:  # Less than 4GB
+                    primary_device = "cpu"
+                    secondary_device = "cpu"
+                    print("Limited GPU memory detected, using CPU for all models")
+                else:
+                    primary_device = "cuda"
+                    secondary_device = "cpu"  # Use CPU for less critical models
+                    print(f"Using GPU for primary models, CPU for secondary models")
+            except Exception as e:
+                print(f"Error checking GPU memory: {str(e)}")
+                primary_device = "cuda" 
+                secondary_device = "cpu"
+        else:
+            primary_device = "cpu"
+            secondary_device = "cpu"
+            print("CUDA not available, using CPU for all models")
+        
+        # Convert string device names to torch devices
+        primary_device = torch.device(primary_device)
+        secondary_device = torch.device(secondary_device)
+        
+        # Step 1: Load YOLO model (highest priority)
         try:
+            print("Loading YOLO model...")
             # Find the YOLO model file
             yolo_path = hf_hub_download(repo_id=model_path, filename="model/yolo_model.pt")
             print(f"Downloaded YOLO weights from {yolo_path}")
             
-            # YOLO requires .pt extension, so we need to create a copy with the correct extension
+            # YOLO requires .pt extension, create a copy with the correct extension
             temp_dir = tempfile.mkdtemp()
             yolo_copy_path = os.path.join(temp_dir, "yolo_model.pt")
             shutil.copy(yolo_path, yolo_copy_path)
-            print(f"Created copy with .pt extension at {yolo_copy_path}")
             
             # Load YOLO model from the copied file
-            # The key fix is to use the correct model loading method for custom models
             model = YOLO(yolo_copy_path)
-            print(f"YOLO model loaded successfully")
+            print("✅ YOLO model loaded successfully")
             
         except Exception as e:
             print(f"Error loading YOLO model: {str(e)}")
             import traceback
             traceback.print_exc()
             
-            # DIRECT FIX - If the YOLO model needs to be initialized from a different format:
-            # Try alternative approach using custom class
+            # Try alternative approach using a base model
             try:
                 print("Attempting alternative YOLO loading method...")
-                # Create a custom YOLO instance without loading weights yet
                 model = YOLO("yolov8n.pt")  # Start with a base model
-                
-                # Load the weights manually
                 state_dict = torch.load(yolo_path, map_location="cpu")
-                
-                # Apply weights to the model
                 model.model.load_state_dict(state_dict)
-                print("Successfully loaded YOLO model with alternative method")
+                print("✅ Successfully loaded YOLO model with alternative method")
             except Exception as alt_e:
-                print(f"Alternative YOLO loading method failed: {str(alt_e)}")
-                traceback.print_exc()
+                print(f"❌ Alternative YOLO loading method failed: {str(alt_e)}")
         
-        # Initialize new_model to None so we can check if it's loaded later
-        new_model = None
-        
-        # Load TrOCR model
+        # Step 2: Load TrOCR model (high priority)
         try:
-            # First load the base processor
+            print("Loading TrOCR processor...")
             processor = AutoProcessor.from_pretrained("microsoft/trocr-base-handwritten")
-            print("TrOCR processor loaded from microsoft/trocr-base-handwritten")
+            print("✅ TrOCR processor loaded successfully")
             
-            # Load the base model architecture first
-            print("Loading base TrOCR model architecture from microsoft/trocr-base-handwritten...")
+            print("Loading TrOCR model...")
+            # Load the base model architecture
+            new_model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
+            
+            # Check if custom weights are available
+            if "model/model.pth" in files:
+                weights_path = hf_hub_download(repo_id=model_path, filename="model/model.pth")
+                print(f"Downloaded custom TrOCR weights from {weights_path}")
+                
+                # Load the state dict
+                state_dict = torch.load(weights_path, map_location="cpu")
+                
+                # Extract state_dict if nested
+                if isinstance(state_dict, dict) and "state_dict" in state_dict:
+                    state_dict = state_dict["state_dict"]
+                
+                # Try to load the state dict, ignoring mismatched keys
+                try:
+                    missing_keys, unexpected_keys = new_model.load_state_dict(state_dict, strict=False)
+                    print(f"Custom TrOCR weights loaded with {len(missing_keys)} missing keys")
+                except Exception as load_error:
+                    print(f"Error loading TrOCR weights: {str(load_error)}")
+            
+            # Move model to primary device
+            new_model = new_model.to(primary_device)
+            print(f"✅ TrOCR model loaded successfully on {primary_device}")
+            
+        except Exception as e:
+            print(f"❌ Error loading TrOCR model: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
+        # Function to safely load BART models
+        def load_bart_model(model_dir, files_prefix, use_mbart=False):
             try:
-                new_model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
-                print("Base TrOCR model architecture loaded successfully")
+                # Check if model directory exists
+                if not any(f.startswith(f"{files_prefix}/") for f in files):
+                    print(f"{files_prefix} directory not found in files")
+                    return None, None
                 
-                # Check if the model was loaded properly
-                if new_model is None:
-                    raise ValueError("Failed to load base model - returned None")
+                print(f"Loading {files_prefix} model...")
                 
-                # Specifically look for model.pth inside the model folder
-                if "model/model.pth" in files:
-                    print("Found model.pth in the model folder")
-                    # Download the weights file
-                    weights_path = hf_hub_download(repo_id=model_path, filename="model/model.pth")
-                    print(f"Downloaded weights from {weights_path}")
-                    
-                    # Load the state dict
-                    state_dict = torch.load(weights_path, map_location="cpu")
-                    print(f"State dict loaded, keys: {state_dict.keys() if isinstance(state_dict, dict) else 'not a dictionary'}")
-                    
-                    # Handle potential differences in state dict keys
-                    if isinstance(state_dict, dict) and "state_dict" in state_dict:
-                        state_dict = state_dict["state_dict"]
-                        print("Extracted state_dict from the loaded file")
-                    
-                    # Print some debugging info about the state dict
-                    if isinstance(state_dict, dict):
-                        print(f"State dict contains {len(state_dict)} keys")
-                        # Print a few sample keys to help with debugging
-                        sample_keys = list(state_dict.keys())[:5]
-                        print(f"Sample keys: {sample_keys}")
-                        
-                        # Only access the model's state_dict if it exists
-                        if new_model is not None:
-                            model_state = new_model.state_dict()
-                            model_sample_keys = list(model_state.keys())[:5]
-                            print(f"Model state dict sample keys: {model_sample_keys}")
-                    
-                    # Try to load the state dict, ignoring mismatched keys
-                    try:
-                        missing_keys, unexpected_keys = new_model.load_state_dict(state_dict, strict=False)
-                        print(f"Custom weights loaded with {len(missing_keys)} missing keys and {len(unexpected_keys)} unexpected keys")
-                        if missing_keys:
-                            print(f"Sample missing keys: {missing_keys[:5]}")
-                        if unexpected_keys:
-                            print(f"Sample unexpected keys: {unexpected_keys[:5]}")
-                    except Exception as load_error:
-                        print(f"Error loading state dict: {str(load_error)}")
-                        
-                        # If direct loading failed, try to map the keys manually
-                        print("Attempting to map keys manually...")
-                        new_state_dict = {}
-                        
-                        # Only proceed if we have a valid model and state_dict
-                        if new_model is not None and isinstance(state_dict, dict):
-                            # Check if we have encoder/decoder structure or flattened structure
-                            has_encoder_prefix = any("encoder" in k for k in state_dict.keys())
-                            
-                            if has_encoder_prefix:
-                                # Keys already have encoder/decoder prefixes
-                                new_state_dict = state_dict
-                            else:
-                                # We need to guess the mapping based on tensor shapes
-                                model_state = new_model.state_dict()
-                                
-                                for key, value in state_dict.items():
-                                    # Try to find matching parameters by shape
-                                    for model_key, model_param in model_state.items():
-                                        if value.shape == model_param.shape:
-                                            new_state_dict[model_key] = value
-                                            break
-                            
-                            # Try loading with the mapped dictionary
-                            if new_state_dict:
-                                missing, unexpected = new_model.load_state_dict(new_state_dict, strict=False)
-                                print(f"Mapped weights loaded with {len(missing)} missing keys and {len(unexpected)} unexpected keys")
+                # Create temp directory for model files
+                temp_dir = os.path.join(tempfile.mkdtemp(), files_prefix)
+                os.makedirs(temp_dir, exist_ok=True)
+                
+                # Get all files in the directory
+                model_files = [f for f in files if f.startswith(f"{files_prefix}/")]
+                
+                # Download essential files first to reduce memory usage
+                essential_files = ["config.json", "vocab.json", "tokenizer_config.json", "special_tokens_map.json", "pytorch_model.bin"]
+                for filename in essential_files:
+                    full_path = f"{files_prefix}/{filename}"
+                    if full_path in model_files:
+                        file_path = hf_hub_download(repo_id=model_path, filename=full_path)
+                        target_path = os.path.join(temp_dir, filename)
+                        shutil.copy(file_path, target_path)
+                
+                # Download remaining files
+                for model_file in model_files:
+                    if not any(model_file.endswith(f"/{efile}") for efile in essential_files):
+                        file_path = hf_hub_download(repo_id=model_path, filename=model_file)
+                        target_path = os.path.join(temp_dir, os.path.basename(model_file))
+                        shutil.copy(file_path, target_path)
+                
+                # Choose the appropriate device for this model
+                device = secondary_device  # Use secondary device (typically CPU) for BART models
+                
+                # Load tokenizer and model
+                if use_mbart:
+                    tokenizer = MBart50Tokenizer.from_pretrained(temp_dir)
+                    model = MBartForConditionalGeneration.from_pretrained(temp_dir)
                 else:
-                    print("model/model.pth not found in files. Available files:", files)
+                    tokenizer = BartTokenizer.from_pretrained(temp_dir)
+                    model = BartForConditionalGeneration.from_pretrained(temp_dir)
                 
-                # Move model to the appropriate device if it's loaded successfully
-                if new_model is not None:
-                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                    new_model.to(device)
-                    print(f"Model moved to device: {device}")
-                else:
-                    print("Cannot move model to device because model is None")
+                # Move model to device
+                model = model.to(device)
+                print(f"✅ {files_prefix} model loaded successfully on {device}")
                 
-            except Exception as model_load_error:
-                print(f"Error loading base TrOCR model: {str(model_load_error)}")
+                # Clean up GPU memory if needed
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                
+                return tokenizer, model
+                
+            except Exception as e:
+                print(f"❌ Error loading {files_prefix} model: {str(e)}")
                 import traceback
                 traceback.print_exc()
-                
-        except Exception as e:
-            print(f"Error in TrOCR loading process: {str(e)}")
-            import traceback
-            traceback.print_exc()
-        # Load BART models according to the folder structure shown in the repo
-        try:
-            # Step 3: Download and load MBart model (for text ordering)
-            if "mbart" in [f.split('/')[0] for f in files if '/' in f]:
-                print("Found mbart folder in repository")
-                
-                # Create temp directory for mbart files
-                mbart_temp_dir = os.path.join(tempfile.mkdtemp(), "mbart")
-                os.makedirs(mbart_temp_dir, exist_ok=True)
-                
-                # Get all files in the mbart directory
-                mbart_files = [f for f in files if f.startswith("mbart/")]
-                
-                # Download each file to our temp directory
-                for mbart_file in mbart_files:
-                    local_path = os.path.join(tempfile.gettempdir(), mbart_file)
-                    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                    
-                    file_path = hf_hub_download(repo_id=model_path, filename=mbart_file)
-                    target_path = os.path.join(mbart_temp_dir, os.path.basename(mbart_file))
-                    shutil.copy(file_path, target_path)
-                
-                print(f"Downloaded MBart model files to {mbart_temp_dir}")
-                
-                # Load MBart tokenizer and model
-                bart_tokenizer = MBart50Tokenizer.from_pretrained(mbart_temp_dir)
-                bart_model = MBartForConditionalGeneration.from_pretrained(mbart_temp_dir).to(device)
-                print("✅ MBart model loaded successfully!")
-            else:
-                print("MBart directory not found in files")
-
-            # Step 4: Download and load BART model 1 (medicine extraction)
-            if "medicinembart" in [f.split('/')[0] for f in files if '/' in f]:
-                print("Found medicinembart folder in repository")
-                
-                # Create temp directory for medicinebart files
-                medicinebart_temp_dir = os.path.join(tempfile.mkdtemp(), "medicinembart")
-                os.makedirs(medicinebart_temp_dir, exist_ok=True)
-                
-                # Get all files in the medicinebart directory
-                medicinebart_files = [f for f in files if f.startswith("medicinembart/")]
-                
-                # Download each file to our temp directory
-                for med_file in medicinebart_files:
-                    local_path = os.path.join(tempfile.gettempdir(), med_file)
-                    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                    
-                    file_path = hf_hub_download(repo_id=model_path, filename=med_file)
-                    target_path = os.path.join(medicinebart_temp_dir, os.path.basename(med_file))
-                    shutil.copy(file_path, target_path)
-                
-                print(f"Downloaded BART model 1 files to {medicinebart_temp_dir}")
-                
-                # Load BART tokenizer and model for medicine extraction
-                bart_tokenizer_1 = BartTokenizer.from_pretrained(medicinebart_temp_dir)
-                bart_model_1 = BartForConditionalGeneration.from_pretrained(medicinebart_temp_dir).to(device)
-                print("✅ BART model 1 (medicine) loaded successfully!")
-            else:
-                print("medicinebart directory not found in files")
-
-            # Step 5: Download and load BART model 2 (appointment/dosage extraction)
-            if "Appointmbart" in [f.split('/')[0] for f in files if '/' in f]:
-                print("Found Appointmbart folder in repository")
-                
-                # Create temp directory for Appointmbart files
-                appointmbart_temp_dir = os.path.join(tempfile.mkdtemp(), "Appointmbart")
-                os.makedirs(appointmbart_temp_dir, exist_ok=True)
-                
-                # Get all files in the Appointmbart directory
-                appointmbart_files = [f for f in files if f.startswith("Appointmbart/")]
-                
-                # Download each file to our temp directory
-                for appt_file in appointmbart_files:
-                    local_path = os.path.join(tempfile.gettempdir(), appt_file)
-                    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-                    
-                    file_path = hf_hub_download(repo_id=model_path, filename=appt_file)
-                    target_path = os.path.join(appointmbart_temp_dir, os.path.basename(appt_file))
-                    shutil.copy(file_path, target_path)
-                
-                print(f"Downloaded BART model 2 files to {appointmbart_temp_dir}")
-                
-                # Load BART tokenizer and model for appointment/dosage extraction
-                bart_tokenizer_2 = BartTokenizer.from_pretrained(appointmbart_temp_dir)
-                bart_model_2 = BartForConditionalGeneration.from_pretrained(appointmbart_temp_dir).to(device)
-                print("✅ BART model 2 (dosage) loaded successfully!")
-            else:
-                print("Appointmbart directory not found in files")
-
-        except Exception as e:
-            print(f"Error loading BART models: {str(e)}")
-            import traceback
-            traceback.print_exc()
+                return None, None
+        
+        # Step 3: Load BART models one at a time (medium priority)
+        # This sequential loading helps prevent memory issues
+        
+        # Load MBart model (for text ordering)
+        print("\nStarting to load BART models sequentially")
+        bart_tokenizer, bart_model = load_bart_model("mbart", "mbart", use_mbart=True)
+        
+        # Load BART model 1 (medicine extraction)
+        bart_tokenizer_1, bart_model_1 = load_bart_model("medicinembart", "medicinembart")
+        
+        # Load BART model 2 (appointment/dosage extraction)
+        bart_tokenizer_2, bart_model_2 = load_bart_model("Appointmbart", "Appointmbart")
 
     except Exception as e:
         print(f"Error accessing Hugging Face repository: {str(e)}")
         import traceback
         traceback.print_exc()
-        
-    print("Model loading completed")
-    print(f"YOLO model loaded: {model is not None}")
-    print(f"TrOCR model loaded: {new_model is not None}")
-    print(f"MBart model loaded: {bart_model is not None}")
-    print(f"BART model 1 loaded: {bart_model_1 is not None}")
-    print(f"BART model 2 loaded: {bart_model_2 is not None}")
     
-    # If models failed to load, we should report this clearly
-    if new_model is None:
-        print("WARNING: TrOCR model failed to load! Application will not function correctly.")
-    if model is None:
-        print("WARNING: YOLO model failed to load! Application will not function correctly.")
-    if bart_model is None:
-        print("WARNING: MBart model failed to load! Text ordering will be skipped.")
-    if bart_model_1 is None:
-        print("WARNING: BART model 1 failed to load! Medicine extraction will be skipped.")
-    if bart_model_2 is None:
-        print("WARNING: BART model 2 failed to load! Dosage extraction will be skipped.")
-
+    # Final status report
+    print("\n=== Model Loading Summary ===")
+    print(f"YOLO model: {'✅ Loaded' if model is not None else '❌ Failed'}")
+    print(f"TrOCR model: {'✅ Loaded' if new_model is not None else '❌ Failed'}")
+    print(f"MBart model: {'✅ Loaded' if bart_model is not None else '❌ Failed'}")
+    print(f"BART model 1: {'✅ Loaded' if bart_model_1 is not None else '❌ Failed'}")
+    print(f"BART model 2: {'✅ Loaded' if bart_model_2 is not None else '❌ Failed'}")
+    
+    # Check if core models are loaded
+    if new_model is None or model is None:
+        print("\n⚠️ WARNING: Core models failed to load! Application will not function correctly.")
 
 def remove_duplicate_boxes(boxes, iou_threshold=0.8):
     if len(boxes) == 0:
@@ -377,13 +310,12 @@ def preprocess_for_trocr(cropped_image):
     return image
 
 def correct_text_with_bart(texts, tokenizer, model, device):
-    # If BART model or tokenizer isn't loaded, just return the original texts
     if tokenizer is None or model is None:
         return texts
         
     corrected_texts = []
     for text in texts:
-        inputs = tokenizer(text, return_tensors="pt", max_length=1024, truncation=True).to(device)
+        inputs = tokenizer(text, return_tensors="pt").to(device)
         with torch.no_grad():
             summary_ids = model.generate(inputs['input_ids'], max_length=1024, num_beams=4, early_stopping=True)
         corrected_text = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
@@ -395,11 +327,9 @@ def split_into_medicine_dosage_pairs(medicine_text, dosage_text):
     medicine_items = [item.strip() for item in medicine_text.split(',') if item.strip()]
     dosage_items = [item.strip() for item in dosage_text.split(',') if item.strip()]
 
-    # Pairing the medicine names with dosages
     for med, dos in zip(medicine_items, dosage_items):
         pairs.append((med, dos))
 
-    # Handle any unmatched pairs
     if len(medicine_items) > len(dosage_items):
         for med in medicine_items[len(dosage_items):]:
             pairs.append((med, ""))
@@ -408,13 +338,15 @@ def split_into_medicine_dosage_pairs(medicine_text, dosage_text):
             pairs.append(("", dos))
     return pairs
 
-
 def process_image(image):
-    # Check if models are loaded
     if model is None or new_model is None:
         raise Exception("Models not loaded properly. Please check server logs.")
         
-    # Run YOLO model for text detection
+    # Convert image to GPU if available
+    if isinstance(image, np.ndarray):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+    # Run YOLO model
     yolo_results = model(image)
     
     # Extract boxes
@@ -422,52 +354,49 @@ def process_image(image):
     for result in yolo_results:
         boxes.extend(result.boxes.xyxy.cpu().numpy())
     
-    # Process boxes
     boxes = remove_duplicate_boxes(boxes)
     sorted_boxes = sort_boxes_top_to_bottom_left_to_right(boxes)
     
-    # Extract text from each box
     extracted_text = ""
     for box in sorted_boxes:
         x1, y1, x2, y2 = map(int, box)
         cropped_image = image[y1:y2, x1:x2]
         trocr_input = preprocess_for_trocr(cropped_image)
-        inputs = {k: v.to(device) for k, v in processor(images=trocr_input, return_tensors="pt").items()}
+        
+        # Move inputs to GPU
+        inputs = processor(images=trocr_input, return_tensors="pt").to(device)
+        
         with torch.no_grad():
             generated_ids = new_model.generate(**inputs)
             output_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         extracted_text += output_text.strip() + " "
     
-    # Step 1: Reorder/correct full sentence using the MBart model
+    # Text processing with BART models
     if bart_tokenizer is not None and bart_model is not None:
-        inputs = bart_tokenizer(extracted_text.strip(), return_tensors="pt", max_length=1024, truncation=True).to(device)
+        inputs = bart_tokenizer(extracted_text.strip(), return_tensors="pt").to(device)
         with torch.no_grad():
             summary_ids = bart_model.generate(inputs['input_ids'], max_length=1024, num_beams=4, early_stopping=True)
         reordered_text = bart_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
     else:
         reordered_text = extracted_text.strip()
     
-    # Step 2: Extract medicine using BART model 1
     if bart_tokenizer_1 is not None and bart_model_1 is not None:
-        inputs_med = bart_tokenizer_1(reordered_text, return_tensors="pt", max_length=1024, truncation=True).to(device)
+        inputs_med = bart_tokenizer_1(reordered_text, return_tensors="pt").to(device)
         with torch.no_grad():
             med_ids = bart_model_1.generate(inputs_med['input_ids'], max_length=1024, num_beams=4, early_stopping=True)
         medicine_text = bart_tokenizer_1.decode(med_ids[0], skip_special_tokens=True)
     else:
         medicine_text = reordered_text
     
-    # Step 3: Extract dosage using BART model 2
     if bart_tokenizer_2 is not None and bart_model_2 is not None:
-        inputs_dos = bart_tokenizer_2(reordered_text, return_tensors="pt", max_length=1024, truncation=True).to(device)
+        inputs_dos = bart_tokenizer_2(reordered_text, return_tensors="pt").to(device)
         with torch.no_grad():
             dos_ids = bart_model_2.generate(inputs_dos['input_ids'], max_length=1024, num_beams=4, early_stopping=True)
         dosage_text = bart_tokenizer_2.decode(dos_ids[0], skip_special_tokens=True)
     else:
         dosage_text = ""
     
-    # Final pairing: medicine first
     return split_into_medicine_dosage_pairs(medicine_text, dosage_text)
-
 
 @app.get("/")
 def read_root():
@@ -475,28 +404,21 @@ def read_root():
 
 @app.post("/process_prescription/")
 async def process_prescription(file: UploadFile = File(...)):
-    # Check file type
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
     
-    # Read the image file
     contents = await file.read()
     
-    # Create a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp:
         temp.write(contents)
         temp_path = temp.name
     
     try:
-        # Read the image with OpenCV
         image = cv2.imread(temp_path)
         if image is None:
             raise HTTPException(status_code=400, detail="Could not read image file")
         
-        # Process the image
         results = process_image(image)
-        
-        # Format results
         formatted_results = [{"medicine": medicine, "dosage": dosage} for medicine, dosage in results]
         
         return JSONResponse(content={"prescriptions": formatted_results})
@@ -505,7 +427,6 @@ async def process_prescription(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
     
     finally:
-        # Clean up the temporary file
         if os.path.exists(temp_path):
             os.remove(temp_path)
 

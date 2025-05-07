@@ -1,18 +1,29 @@
-uvicorn==0.22.0
-python-multipart==0.0.6
-opencv-python==4.8.1.78
-numpy==1.24.3
-# torch==2.0.1
-Pillow==9.5.0
-transformers==4.30.2
-huggingface-hub==0.16.4
-ultralytics==8.0.196
-typing-extensions==4.7.1
-pydantic==1.10.12
-fastapi==0.95.2
-# opencv-python==4.8.0.76
-sentencepiece==0.1.99
-python-dotenv==1.0.1
-# CPU-only version of PyTorch to avoid CUDA dependency issues
-torch==2.0.1+cpu
---extra-index-url https://download.pytorch.org/whl/cpu
+python-multipart
+sentencepiece
+Pillow
+transformers
+huggingface-hub
+ultralytics
+starlette
+pydantic
+typing-extensions
+annotated-types
+pydantic-core
+typing-inspection
+anyio
+idna
+sniffio
+click
+h11
+colorama
+httptools
+python-dotenv
+PyYAML
+watchfiles
+websockets
+filelock
+fastapi
+uvicorn[standard]
+opencv-python-headless
+numpy
+torch
