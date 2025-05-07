@@ -9,7 +9,6 @@
 
 **Pen to Pill (P2P)** is an AI-powered system that digitizes handwritten medical prescriptions, with a focus on complex multilingual documents written in Arabic and English. It aims to improve patient safety and healthcare efficiency by extracting structured medication data from unstructured, handwritten prescriptions.
 
-
 ---
 
 ## **Tools & Technologies**
@@ -30,23 +29,29 @@
 The solution follows a multi-step pipeline:
 
 1. **Handwritten Word Region Detection**
+
    - Custom annotations using Roboflow.
    - YOLOv8 model trained to detect word-level bounding boxes (Arabic & English).
 
 2. **Duplicate Box Removal**
+
    - Non-Maximum Suppression (IoU = 0.8) to eliminate redundant detections.
 
 3. **Box Sorting**
+
    - Sort boxes top-to-bottom, left-to-right for proper text sequence.
 
 4. **Text Recognition (TrOCR)**
+
    - Preprocessed and resized word images.
    - Fine-tuned TrOCR model for accurate handwriting recognition.
 
 5. **Text Reconstruction**
+
    - Combine individual words into a single prescription string.
 
 6. **Text Correction & Structuring (BART)**
+
    - Clean and format OCR output into: `medicine dosage, medicine dosage, ...`
 
 7. **Post-Processing**
@@ -54,7 +59,7 @@ The solution follows a multi-step pipeline:
 
 ---
 
-##  **Future Work**
+## **Future Work**
 
 - Expand the dataset with more real-world handwritten prescriptions.
 - Improve mBART output consistency on edge cases.
@@ -66,6 +71,7 @@ The solution follows a multi-step pipeline:
 ## **Installation & Deployment Guide**
 
 ### Prerequisites
+
 - Node.js and npm installed
 - Python 3.10 installed
 - Git installed
@@ -73,17 +79,21 @@ The solution follows a multi-step pipeline:
 ### Installation & Setup
 
 #### Frontend Setup
+
 1. Navigate to the Frontend directory:
+
    ```bash
    cd FrontEnd
    ```
 
 2. Install dependencies:
+
    ```bash
    npm i
    ```
 
 3. Start the development server:
+
    ```bash
    npm run server
    ```
@@ -94,13 +104,16 @@ The solution follows a multi-step pipeline:
    ```
 
 #### Backend Setup
+
 1. Navigate back to the project root directory, then to the Backend folder:
+
    ```bash
    cd ..
    cd BackEnd
    ```
 
 2. Install required Python packages:
+
    ```bash
    pip install -r requirements.txt
    ```
@@ -113,4 +126,8 @@ The solution follows a multi-step pipeline:
 The frontend application should now be accessible at `http://localhost:8000` and will communicate with the backend running on the port specified in the FastAPI application.
 
 ## **Demo Video**
-<video controls src="Demo/Demo_Pen_To_Pill.mp4" title="Demo"></video>
+
+<video width="700" height="400" controls>
+  <source src="Demo/Demo_Pen_To_Pill.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
