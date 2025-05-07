@@ -97,6 +97,18 @@ npm start
 cd ..
 cd BackEnd
 ```
+Make sure the Python version is 3.10.0
+* **Windows:**
+  
+   ```bash
+    python --version
+   ```
+   
+* **Linux/macOS:**
+  
+   ```bash
+    python3 --version
+   ```
 
 #### 1. Create a virtual environment:
 
