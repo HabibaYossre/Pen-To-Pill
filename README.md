@@ -128,6 +128,6 @@ The frontend application should now be accessible at `http://localhost:8000` and
 ## **Demo Video**
 
 <video width="700" height="400" controls>
-  <source src="Demo/Demo_Pen_To_Pill.mp4" type="video/mp4">
+  <source src="./Demo/Demo_Pen_To_Pill.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
