@@ -126,4 +126,4 @@ The solution follows a multi-step pipeline:
 The frontend application should now be accessible at `http://localhost:8000` and will communicate with the backend running on the port specified in the FastAPI application.
 
 ## **Demo Video**
-![Demo Video](Demo/Demo_Pen_To_Pill-ezgif.com-video-to-gif-converter.gif)
+![Demo Video](./Demo/Demo_Pen_To_Pill.gif)
