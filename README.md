@@ -106,22 +106,52 @@ The solution follows a multi-step pipeline:
 #### Backend Setup
 
 1. Navigate back to the project root directory, then to the Backend folder:
-
+   
    ```bash
    cd ..
    cd BackEnd
    ```
+2. Make Python envirenment:
 
-2. Install required Python packages:
+   - Windows:
+
+      ```bash
+      python -m venv venv    
+      ```
+   - Linux:
+
+       ```bash
+      python3 -m venv venv    
+      ```
+
+3. Activate the envirenment:
+   - Windows:
+
+      ```bash
+      venv\Scripts\activate
+      ```
+   - Linux:
+      ```bash
+      source venv/bin/activate
+      ```
+4. Install required Python packages:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Run the Flask application:
-   ```bash
-   python app.py
-   ```
+5. Run the Flask application:
+   - Windows:
+      
+      ```bash
+      python app.py
+      ```
+   - Linux:
+
+      ```bash
+      python3 app.py
+      ```
+
 
 The frontend application should now be accessible at `http://localhost:8000` and will communicate with the backend running on the port specified in the FastAPI application.
 
